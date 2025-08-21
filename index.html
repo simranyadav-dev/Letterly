@@ -1,0 +1,1083 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Letterly</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Press Start 2P', cursive;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+            color: #00ff41;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow-x: hidden;
+        }
+        
+        .scanlines::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: repeating-linear-gradient(
+                0deg,
+                transparent,
+                transparent 2px,
+                rgba(0, 255, 65, 0.03) 2px,
+                rgba(0, 255, 65, 0.03) 4px
+            );
+            pointer-events: none;
+            z-index: 1000;
+        }
+        
+        /* Page Management */
+        .page {
+            display: none;
+            min-height: 100vh;
+        }
+        
+        .page.active {
+            display: flex;
+            flex-direction: column;
+        }
+        
+        /* Welcome Page Styles */
+        .welcome-container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            padding: 40px 20px;
+        }
+        
+        .welcome-title {
+            font-size: 32px;
+            margin-bottom: 20px;
+            text-shadow: 3px 3px 0 #006622;
+            animation: glow 2s ease-in-out infinite alternate;
+        }
+        
+        @keyframes glow {
+            from { text-shadow: 3px 3px 0 #006622, 0 0 10px #00ff41; }
+            to { text-shadow: 3px 3px 0 #006622, 0 0 20px #00ff41, 0 0 30px #00ff41; }
+        }
+        
+        .welcome-subtitle {
+            font-size: 12px;
+            margin-bottom: 40px;
+            color: #cccccc;
+            max-width: 600px;
+            line-height: 1.8;
+        }
+        
+        .welcome-buttons {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+        
+        /* Instructions Page Styles */
+        .instructions-container {
+            flex: 1;
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 40px 20px;
+        }
+        
+        .instructions-title {
+            text-align: center;
+            font-size: 24px;
+            margin-bottom: 40px;
+            text-shadow: 2px 2px 0 #006622;
+        }
+        
+        .instruction-section {
+            background: rgba(0, 0, 0, 0.8);
+            border: 2px solid #00ff41;
+            padding: 20px;
+            margin-bottom: 20px;
+            border-radius: 0;
+        }
+        
+        .instruction-section h3 {
+            color: #00ff41;
+            font-size: 12px;
+            margin-bottom: 15px;
+            text-decoration: underline;
+        }
+        
+        .instruction-section p {
+            color: #cccccc;
+            font-size: 8px;
+            line-height: 1.6;
+            margin-bottom: 10px;
+        }
+        
+        .instruction-list {
+            list-style: none;
+            padding-left: 0;
+        }
+        
+        .instruction-list li {
+            color: #cccccc;
+            font-size: 8px;
+            line-height: 1.6;
+            margin-bottom: 8px;
+            padding-left: 20px;
+            position: relative;
+        }
+        
+        .instruction-list li::before {
+            content: '→';
+            color: #00ff41;
+            position: absolute;
+            left: 0;
+        }
+        
+        /* Header Styles */
+        header {
+            background: rgba(0, 0, 0, 0.8);
+            border-bottom: 4px solid #00ff41;
+            padding: 20px;
+            box-shadow: 0 4px 0 #006622;
+        }
+        
+        .header-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+        
+        h1 {
+            text-align: center;
+            font-size: 24px;
+            text-shadow: 2px 2px 0 #006622;
+            margin-bottom: 20px;
+        }
+        
+        .controls {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 20px;
+        }
+        
+        .control-group {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .control-label {
+            font-size: 10px;
+            color: #cccccc;
+        }
+        
+        .pixel-dropdown {
+            background: linear-gradient(145deg, #333333, #111111);
+            border: 2px solid #00ff41;
+            color: #00ff41;
+            padding: 10px 15px;
+            font-family: 'Press Start 2P', cursive;
+            font-size: 10px;
+            cursor: pointer;
+            box-shadow: 2px 2px 0 #006622;
+            min-width: 160px;
+            text-transform: uppercase;
+            outline: none;
+        }
+        
+        .pixel-dropdown:hover {
+            background: linear-gradient(145deg, #444444, #222222);
+        }
+        
+        .pixel-dropdown:focus {
+            box-shadow: 0 0 8px rgba(0, 255, 65, 0.5);
+            border-color: #66ff66;
+        }
+        
+        .pixel-dropdown option {
+            background: #111111;
+            color: #00ff41;
+            padding: 8px;
+        }
+        
+        /* Button Styles */
+        .pixel-button {
+            background: linear-gradient(145deg, #00ff41, #006622);
+            border: none;
+            color: #000000;
+            padding: 15px 30px;
+            font-family: 'Press Start 2P', cursive;
+            font-size: 12px;
+            cursor: pointer;
+            box-shadow: 4px 4px 0 #004411;
+            transition: all 0.1s ease;
+            text-transform: uppercase;
+        }
+        
+        .pixel-button:hover {
+            transform: translate(2px, 2px);
+            box-shadow: 2px 2px 0 #004411;
+        }
+        
+        .pixel-button:active {
+            transform: translate(4px, 4px);
+            box-shadow: none;
+        }
+        
+        .pixel-button.secondary {
+            background: linear-gradient(145deg, #333333, #111111);
+            color: #00ff41;
+            border: 2px solid #00ff41;
+            box-shadow: 4px 4px 0 #006622;
+        }
+        
+        .pixel-button.secondary:hover {
+            background: linear-gradient(145deg, #444444, #222222);
+            box-shadow: 2px 2px 0 #006622;
+        }
+        
+        .pixel-button:disabled {
+            background: #333333;
+            color: #666666;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: 2px 2px 0 #222222;
+        }
+        
+        /* Game Area Styles */
+        main {
+            flex: 1;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 40px 20px;
+            width: 100%;
+        }
+        
+        .game-area {
+            background: rgba(0, 0, 0, 0.9);
+            border: 4px solid #00ff41;
+            border-radius: 0;
+            padding: 30px;
+            margin-bottom: 30px;
+            box-shadow: 0 8px 0 #006622, inset 0 4px 8px rgba(0, 255, 65, 0.1);
+        }
+        
+        .stats {
+            display: flex;
+            justify-content: space-around;
+            margin-bottom: 30px;
+            background: rgba(0, 255, 65, 0.1);
+            padding: 15px;
+            border: 2px solid #006622;
+        }
+        
+        .stat {
+            text-align: center;
+        }
+        
+        .stat-label {
+            font-size: 8px;
+            color: #cccccc;
+            margin-bottom: 5px;
+        }
+        
+        .stat-value {
+            font-size: 14px;
+            color: #00ff41;
+            text-shadow: 1px 1px 0 #006622;
+        }
+        
+        .typing-area {
+            position: relative;
+            min-height: 200px;
+        }
+        
+        .text-display {
+            background: rgba(0, 0, 0, 0.7);
+            border: 2px solid #333333;
+            padding: 20px;
+            margin-bottom: 20px;
+            font-size: 12px;
+            line-height: 1.6;
+            color: #ffffff;
+            min-height: 120px;
+            position: relative;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+        
+        .text-display .current-word {
+            background: rgba(0, 255, 65, 0.2);
+            padding: 2px 4px;
+        }
+        
+        .text-display .correct {
+            color: #00ff41;
+            background: rgba(0, 255, 65, 0.1);
+        }
+        
+        .text-display .incorrect {
+            color: #ff0000;
+            background: rgba(255, 0, 0, 0.2);
+        }
+        
+        .input-area {
+            position: relative;
+        }
+        
+        #typing-input {
+            width: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            border: 3px solid #00ff41;
+            color: #00ff41;
+            font-family: 'Press Start 2P', cursive;
+            font-size: 10px;
+            padding: 15px;
+            outline: none;
+            resize: none;
+            min-height: 80px;
+        }
+        
+        #typing-input:focus {
+            box-shadow: 0 0 10px rgba(0, 255, 65, 0.5);
+            border-color: #66ff66;
+        }
+        
+        .game-controls {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            margin-top: 20px;
+            flex-wrap: wrap;
+        }
+        
+        .results {
+            background: rgba(0, 255, 65, 0.1);
+            border: 2px solid #00ff41;
+            padding: 20px;
+            text-align: center;
+            margin-top: 20px;
+            display: none;
+        }
+        
+        .results h3 {
+            font-size: 14px;
+            margin-bottom: 15px;
+            color: #00ff41;
+        }
+        
+        .results-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            margin-top: 15px;
+        }
+        
+        .timer-display {
+            position: absolute;
+            top: 10px;
+            right: 20px;
+            font-size: 18px;
+            color: #ff6600;
+            text-shadow: 1px 1px 0 #000000;
+        }
+        
+        .progress-bar {
+            width: 100%;
+            height: 4px;
+            background: #333333;
+            margin: 10px 0;
+            overflow: hidden;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #00ff41, #66ff66);
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+        
+        /* Footer */
+        footer {
+            background: rgba(0, 0, 0, 0.9);
+            border-top: 4px solid #00ff41;
+            padding: 20px;
+            text-align: center;
+            color: #cccccc;
+            font-size: 8px;
+            box-shadow: 0 -4px 0 #006622;
+        }
+        
+        footer p {
+            margin: 5px 0;
+        }
+        
+        .copyright {
+            color: #00ff41;
+        }
+        
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .welcome-title {
+                font-size: 24px;
+            }
+            
+            .welcome-subtitle {
+                font-size: 10px;
+            }
+            
+            .controls {
+                flex-direction: column;
+                align-items: center;
+            }
+            
+            h1 {
+                font-size: 18px;
+            }
+            
+            .game-area {
+                padding: 20px;
+            }
+            
+            .stats {
+                flex-direction: column;
+                gap: 10px;
+            }
+            
+            .game-controls {
+                flex-direction: column;
+                align-items: center;
+            }
+        }
+    </style>
+</head>
+<body class="scanlines">
+    <!-- Welcome Page -->
+    <div id="welcome-page" class="page active">
+        <div class="welcome-container">
+            <h1 class="welcome-title">🎮  Letterly  🎮</h1>
+            <p class="welcome-subtitle">
+                Welcome to the ultimate retro typing experience! Master your keyboard skills 
+                with our pixel-perfect typing trainer featuring multiple difficulty levels, 
+                comprehensive timing options, and endless practice content.
+            </p>
+            <div class="welcome-buttons">
+                <button class="pixel-button" onclick="showPage('game-page')">START TYPING</button>
+                <button class="pixel-button secondary" onclick="showPage('instructions-page')">HOW TO PLAY</button>
+            </div>
+        </div>
+        <footer>
+            <p class="copyright">&copy; 2025 Letterly. Made with ❤️ by <a href="">SIMRAN YADAV</a>. All rights reserved.</p>
+        </footer>
+    </div>
+
+    <!-- Instructions Page -->
+    <div id="instructions-page" class="page">
+        <div class="instructions-container">
+            <h2 class="instructions-title">📖 HOW TO PLAY 📖</h2>
+            
+            <div class="instruction-section">
+                <h3>Getting Started</h3>
+                <p>Welcome to Pixel Typing Master! This guide will help you understand all the features and get the most out of your typing practice.</p>
+            </div>
+
+            <div class="instruction-section">
+                <h3>Game Setup</h3>
+                <ul class="instruction-list">
+                    <li>Choose your time duration from the dropdown (1-30 minutes)</li>
+                    <li>Select your difficulty level (Beginner, Intermediate, Advanced, Expert)</li>
+                    <li>Click "START GAME" to begin your typing session</li>
+                    <li>The timer will start counting down immediately</li>
+                </ul>
+            </div>
+
+            <div class="instruction-section">
+                <h3>Difficulty Levels</h3>
+                <ul class="instruction-list">
+                    <li><strong>Beginner:</strong> Simple sentences with basic vocabulary and punctuation</li>
+                    <li><strong>Intermediate:</strong> Programming and technical content with moderate complexity</li>
+                    <li><strong>Advanced:</strong> Complex technical topics with challenging vocabulary</li>
+                    <li><strong>Expert:</strong> Advanced concepts with sophisticated terminology</li>
+                </ul>
+            </div>
+
+            <div class="instruction-section">
+                <h3>Typing Practice</h3>
+                <ul class="instruction-list">
+                    <li>Type the displayed text exactly as shown</li>
+                    <li>Green highlighting indicates correct characters</li>
+                    <li>Red highlighting shows typing errors</li>
+                    <li>The current position is highlighted in the text</li>
+                    <li>New content automatically loads when you finish a paragraph</li>
+                </ul>
+            </div>
+
+            <div class="instruction-section">
+                <h3>Tips for Better Typing</h3>
+                <ul class="instruction-list">
+                    <li>Focus on accuracy first, speed will develop naturally</li>
+                    <li>Use proper finger placement on the home row keys</li>
+                    <li>Keep your wrists straight and fingers curved</li>
+                    <li>Look at the screen, not the keyboard</li>
+                    <li>Practice regularly for consistent improvement</li>
+                </ul>
+            </div>
+
+            <div class="instruction-section">
+                <h3>Results and Statistics</h3>
+                <p>After completing your session, you'll see detailed statistics including your Words Per Minute (WPM), accuracy percentage, total characters typed, and error count. Use these metrics to track your progress and identify areas for improvement.</p>
+            </div>
+
+            <div style="text-align: center; margin-top: 40px;">
+                <button class="pixel-button" onclick="showPage('welcome-page')">← BACK TO WELCOME</button>
+                <button class="pixel-button" onclick="showPage('game-page')">START TYPING →</button>
+            </div>
+        </div>
+        <footer>
+            <p class="copyright">&copy; 2025 Letterly. Made with ❤️ by <a href="">SIMRAN YADAV</a>. All rights reserved.</p>
+        </footer>
+    </div>
+
+    <!-- Game Page -->
+    <div id="game-page" class="page">
+        <header>
+            <div class="header-content">
+                <h1>🎮 LETTERLY  🎮</h1>
+                
+                <div class="controls">
+                    <div class="control-group">
+                        <div class="control-label">TIME DURATION</div>
+                        <select class="pixel-dropdown" id="time-select">
+                            <option value="60">1 MINUTE</option>
+                            <option value="180">3 MINUTES</option>
+                            <option value="300">5 MINUTES</option>
+                            <option value="600">10 MINUTES</option>
+                            <option value="900">15 MINUTES</option>
+                            <option value="1800">30 MINUTES</option>
+                        </select>
+                    </div>
+                    
+                    <div class="control-group">
+                        <div class="control-label">DIFFICULTY LEVEL</div>
+                        <select class="pixel-dropdown" id="level-select">
+                            <option value="beginner">BEGINNER</option>
+                            <option value="intermediate">INTERMEDIATE</option>
+                            <option value="advanced">ADVANCED</option>
+                            <option value="expert">EXPERT</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <main>
+            <div class="game-area">
+                <div class="timer-display" id="timer">1:00</div>
+                <div class="stats" id="stats-display" style="display: none;">
+                    <div class="stat">
+                        <div class="stat-label">WPM</div>
+                        <div class="stat-value" id="wpm">0</div>
+                    </div>
+                    <div class="stat">
+                        <div class="stat-label">ACCURACY</div>
+                        <div class="stat-value" id="accuracy">100%</div>
+                    </div>
+                    <div class="stat">
+                        <div class="stat-label">CHARACTERS</div>
+                        <div class="stat-value" id="characters">0</div>
+                    </div>
+                    <div class="stat">
+                        <div class="stat-label">ERRORS</div>
+                        <div class="stat-value" id="errors">0</div>
+                    </div>
+                </div>
+                
+                
+                <div class="progress-bar">
+                    <div class="progress-fill" id="progress"></div>
+                </div>
+                
+                <div class="typing-area">
+                    <div class="text-display" id="text-display"></div>
+                    <div class="input-area">
+                        <textarea 
+                            id="typing-input" 
+                            placeholder="Click START GAME and begin typing here..."
+                            disabled
+                        ></textarea>
+                    </div>
+                </div>
+                
+                <div class="game-controls">
+                    <button class="pixel-button" id="start-btn">START GAME</button>
+                    <button class="pixel-button secondary" id="reset-btn">RESET</button>
+                </div>
+                
+                <div class="results" id="results">
+                    <h3>🎯 GAME COMPLETE! 🎯</h3>
+                    <div class="results-grid">
+                        <div class="stat">
+                            <div class="stat-label">FINAL WPM</div>
+                            <div class="stat-value" id="final-wpm">0</div>
+                        </div>
+                        <div class="stat">
+                            <div class="stat-label">ACCURACY</div>
+                            <div class="stat-value" id="final-accuracy">0%</div>
+                        </div>
+                        <div class="stat">
+                            <div class="stat-label">TOTAL ERRORS</div>
+                            <div class="stat-value" id="final-errors">0</div>
+                        </div>
+                        <div class="stat">
+                            <div class="stat-label">CHARACTERS TYPED</div>
+                            <div class="stat-value" id="final-characters">0</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <footer>
+           <p class="copyright">&copy; 2025 Letterly. Made with ❤️ by <a href="">SIMRAN YADAV</a>. All rights reserved.</p>
+        </footer>
+    </div>
+
+    <script>
+        // Page Navigation
+        function showPage(pageId) {
+            document.querySelectorAll('.page').forEach(page => page.classList.remove('active'));
+            document.getElementById(pageId).classList.add('active');
+        }
+
+        // Typing Practice Game
+        class PixelTypingMaster {
+            constructor() {
+                this.gameState = {
+                    isActive: false,
+                    timeLeft: 60,
+                    selectedTime: 60,
+                    selectedLevel: 'beginner',
+                    startTime: null,
+                    currentText: '',
+                    currentIndex: 0,
+                    correctChars: 0,
+                    totalChars: 0,
+                    errors: 0,
+                    wpm: 0,
+                    accuracy: 100
+                };
+                
+                this.texts = {
+                    beginner: [
+                        "The quick brown fox jumps over the lazy dog near the old wooden bridge. This sentence contains every letter in the alphabet and helps practice typing all keys. Learning to type takes time and patience, but with daily practice you will see improvement.",
+                        "Welcome to the world of typing practice where every keystroke counts toward building your skills. The journey of learning to type efficiently begins with understanding proper finger placement and gradually building speed through repetition.",
+                        "Practice makes perfect when you dedicate time each day to improving your typing skills. Start with simple words and focus on accuracy rather than speed. Good typing posture is important for comfort and efficiency during long sessions.",
+                        "Technology has transformed the way we communicate and work in the modern world. From emails to social media posts, typing has become an essential skill for personal and professional success in our digital age.",
+                        "Reading books expands your vocabulary and improves your understanding of language structure. The more you read, the better you become at recognizing word patterns and common phrases that appear in everyday writing.",
+                        "Music brings joy and inspiration to people around the world. Whether you prefer classical compositions or modern popular songs, music has the power to evoke emotions and create lasting memories.",
+                        "Cooking is both an art and a science that involves combining ingredients to create delicious meals. Learning basic cooking techniques can help you prepare healthy and tasty food for yourself and your family.",
+                        "Exercise and physical activity are important for maintaining good health and wellness. Regular movement helps strengthen muscles, improve cardiovascular health, and boost mental well-being throughout your lifetime.",
+                        "Friendship is one of the most valuable relationships we can have in life. True friends support each other through difficult times and celebrate together during moments of joy and success.",
+                        "Nature provides us with countless wonders to explore and appreciate. From towering mountains to vast oceans, the natural world offers beauty and peace that can refresh our minds and spirits."
+                    ],
+                    intermediate: [
+                        "Programming is an art form that combines logical thinking with creative problem solving to build software solutions that can change the world. The journey of becoming a skilled programmer involves learning multiple programming languages and understanding algorithms.",
+                        "Web development encompasses both front-end and back-end technologies that work together to create dynamic and interactive websites. Modern frameworks provide powerful tools for building scalable applications that serve millions of users.",
+                        "Database management systems are crucial for storing, organizing, and retrieving large amounts of information efficiently. SQL databases provide ACID compliance while NoSQL databases offer flexible schema designs for modern applications.",
+                        "Artificial intelligence and machine learning have revolutionized numerous industries by providing powerful tools for data analysis, pattern recognition, and automated decision making processes.",
+                        "Cybersecurity has become increasingly important as organizations rely more heavily on digital systems to store sensitive information and conduct business operations in our interconnected world.",
+                        "Software engineering principles emphasize the importance of writing clean, maintainable code that can be easily understood and modified by other developers working on the same project.",
+                        "Version control systems like Git enable teams of developers to collaborate effectively on large projects by tracking changes and managing different versions of source code files.",
+                        "Cloud computing platforms provide scalable infrastructure and services that allow businesses to deploy applications globally without maintaining their own physical server hardware.",
+                        "Mobile app development requires understanding different platforms and frameworks to create applications that work seamlessly across various devices and operating systems.",
+                        "Data visualization techniques help transform complex datasets into clear, understandable graphics that reveal patterns and insights hidden within numerical information."
+                    ],
+                    advanced: [
+                        "Quantum computing represents a paradigm shift from classical computing by leveraging the principles of quantum mechanics to process information in fundamentally different ways that could solve previously intractable problems.",
+                        "Distributed systems architecture addresses the challenges of building reliable, scalable, and performant applications that span multiple computers and geographic locations while maintaining data consistency.",
+                        "Machine learning algorithms require extensive training datasets, careful feature engineering, and rigorous validation techniques to ensure models generalize well to previously unseen real-world data.",
+                        "Cryptographic protocols provide the mathematical foundation for secure communication over untrusted networks, protecting sensitive information from unauthorized access and tampering.",
+                        "Blockchain technology creates immutable distributed ledgers that enable trustless transactions between parties without requiring a central authority to validate and process payments.",
+                        "Neural networks simulate the structure and function of biological neurons to create artificial systems capable of learning complex patterns from large amounts of training data.",
+                        "Microservices architecture decomposes large monolithic applications into smaller, independently deployable services that communicate through well-defined interfaces and protocols.",
+                        "Container orchestration platforms like Kubernetes manage the deployment, scaling, and operation of containerized applications across clusters of computing resources.",
+                        "Real-time systems must process inputs and generate outputs within strict timing constraints to meet the requirements of safety-critical applications in various industries.",
+                        "Compiler design involves translating high-level programming languages into machine code while performing optimizations to improve the performance and efficiency of the resulting executable programs."
+                    ],
+                    expert: [
+                        "Advanced cryptographic protocols utilize zero-knowledge proofs, homomorphic encryption, and elliptic curve cryptography to enable privacy-preserving computation while maintaining computational efficiency and provable security guarantees.",
+                        "Byzantine fault tolerance algorithms enable distributed consensus in the presence of arbitrary failures and malicious actors, requiring sophisticated mathematical proofs and careful analysis of adversarial scenarios.",
+                        "Quantum algorithms like Shor's factoring algorithm and Grover's search algorithm demonstrate exponential speedups for specific computational problems, threatening current cryptographic systems while enabling new possibilities.",
+                        "Formal verification methods use mathematical techniques to prove the correctness of critical software systems, ensuring that programs behave according to their specifications under all possible execution scenarios.",
+                        "Advanced compiler optimizations including loop transformations, vectorization, and interprocedural analysis can dramatically improve program performance by exploiting architectural features and algorithmic properties.",
+                        "Category theory provides a unifying mathematical framework for understanding the relationships between different areas of mathematics and computer science, enabling powerful abstractions and generalizations.",
+                        "Type theory and dependent types enable the creation of programming languages where the type system can express and enforce complex invariants and properties at compile time.",
+                        "Distributed consensus protocols like Raft and PBFT must handle network partitions, message ordering, and state machine replication while maintaining safety and liveness properties.",
+                        "Advanced machine learning techniques including variational autoencoders, generative adversarial networks, and transformer architectures push the boundaries of what artificial systems can achieve.",
+                        "Computational complexity theory analyzes the resources required to solve computational problems, establishing fundamental limits on what can be computed efficiently within various complexity classes."
+                    ]
+                };
+                
+                // Add many more paragraphs for extensive practice
+                this.addMoreTexts();
+                
+                this.timer = null;
+                this.initializeEventListeners();
+                this.loadNewText();
+            }
+            
+            addMoreTexts() {
+                // Adding 100+ more paragraphs across all levels
+                const additionalTexts = {
+                    beginner: [
+                        "The sun rises in the east and sets in the west, marking the beginning and end of each day. This natural cycle has guided human activities for thousands of years.",
+                        "Water is essential for all life on Earth. Plants, animals, and humans all depend on clean water to survive and thrive in their respective environments.",
+                        "Learning a new language opens doors to different cultures and ways of thinking. It challenges your brain and helps you communicate with people from around the world.",
+                        "Gardens require patience and care to flourish. Regular watering, proper soil, and adequate sunlight help plants grow strong and produce beautiful flowers or nutritious vegetables.",
+                        "Books transport readers to different worlds and time periods through the power of imagination and storytelling. Reading regularly improves vocabulary and critical thinking skills.",
+                        "Transportation has evolved dramatically from walking and horse-drawn carriages to modern cars, trains, and airplanes that connect cities and countries across the globe.",
+                        "Education provides the foundation for personal growth and career development. Schools and universities offer structured learning environments where students can explore various subjects.",
+                        "Art comes in many forms including painting, sculpture, music, dance, and literature. Creative expression allows artists to share their perspectives and emotions with others.",
+                        "Weather patterns affect daily life in countless ways, from the clothes we wear to the activities we plan. Understanding forecasts helps us prepare for changing conditions.",
+                        "Family traditions create lasting memories and strengthen bonds between generations. Holiday celebrations, special meals, and shared activities bring relatives together.",
+                        "Sports and games provide entertainment and physical exercise while teaching valuable lessons about teamwork, perseverance, and fair play among participants.",
+                        "Communication has been revolutionized by smartphones, email, and social media platforms that allow instant connection with people anywhere in the world.",
+                        "Science helps us understand how the world works through careful observation, experimentation, and analysis of natural phenomena and human behavior.",
+                        "Cities offer many opportunities for work, education, and entertainment, but they also present challenges like traffic congestion and air pollution.",
+                        "Animals adapt to their environments in fascinating ways, developing unique features and behaviors that help them survive and reproduce successfully.",
+                        "Photography captures moments in time and preserves memories that might otherwise fade. Digital cameras have made this art form accessible to everyone.",
+                        "Mathematics forms the foundation for many fields including science, engineering, finance, and technology. Numbers and equations describe patterns in our world.",
+                        "History teaches us about past civilizations, important events, and influential people who shaped the world we live in today through their actions.",
+                        "Health and nutrition play crucial roles in maintaining energy levels and preventing disease. Balanced diets and regular exercise contribute to overall wellness.",
+                        "Architecture combines artistic vision with practical engineering to create buildings that are both beautiful and functional for their intended purposes.",
+                        "Seasons change throughout the year, bringing different weather patterns, daylight hours, and natural phenomena that affect plant and animal behavior.",
+                        "Travel broadens perspectives by exposing people to different cultures, customs, and ways of life that exist in various regions around the world.",
+                        "Technology continues to advance at a rapid pace, creating new tools and possibilities that transform how we work, learn, and interact with others.",
+                        "Sleep is essential for physical and mental health, allowing our bodies and minds to rest, recover, and prepare for the challenges of each new day.",
+                        "Hobbies provide enjoyment and relaxation outside of work and school responsibilities. They offer opportunities to develop new skills and meet like-minded people.",
+                        "The ocean covers most of our planet's surface and contains incredible biodiversity, from tiny microscopic organisms to massive whales and other marine creatures.",
+                        "Forests play vital roles in producing oxygen, storing carbon, and providing habitats for countless species of plants, animals, and insects.",
+                        "Time management helps people accomplish their goals more efficiently by prioritizing tasks and avoiding procrastination in personal and professional settings.",
+                        "Friendship requires mutual respect, trust, and understanding between people who choose to support each other through life's ups and downs.",
+                        "Creativity can be expressed through many different mediums including writing, drawing, building, cooking, and problem-solving in everyday situations."
+                    ],
+                    intermediate: [
+                        "Software testing methodologies ensure that applications function correctly and meet user requirements before being deployed to production environments where they serve real customers.",
+                        "Network protocols define the rules and standards that govern how computers communicate with each other across local area networks and the global internet infrastructure.",
+                        "Object-oriented programming introduces concepts like inheritance, polymorphism, and encapsulation that help developers create modular and reusable code components.",
+                        "Agile development methodologies emphasize iterative development, continuous feedback, and adaptive planning to deliver working software that meets changing business requirements.",
+                        "API design principles focus on creating interfaces that are intuitive, well-documented, and stable to ensure third-party developers can integrate systems effectively.",
+                        "Performance optimization techniques include profiling code execution, identifying bottlenecks, and implementing caching strategies to improve application responsiveness.",
+                        "Security vulnerabilities like SQL injection, cross-site scripting, and buffer overflows can compromise applications if developers don't follow secure coding practices.",
+                        "DevOps practices integrate development and operations teams to streamline software deployment processes and maintain reliable production environments.",
+                        "Responsive web design ensures that websites provide optimal viewing experiences across a wide range of devices with different screen sizes and capabilities.",
+                        "Content management systems enable non-technical users to create, edit, and publish digital content without requiring extensive programming knowledge.",
+                        "Search engine optimization involves structuring web content and metadata to improve visibility in search results and attract organic traffic from users.",
+                        "Digital marketing strategies leverage social media platforms, email campaigns, and online advertising to reach target audiences and promote products effectively.",
+                        "User experience design focuses on creating intuitive interfaces that meet user needs while providing enjoyable and efficient interactions with digital products.",
+                        "Big data analytics processes large datasets to extract meaningful insights that inform business decisions and reveal patterns in customer behavior.",
+                        "Internet of Things devices connect everyday objects to networks, enabling remote monitoring and control of appliances, sensors, and automated systems.",
+                        "Virtual reality technology creates immersive digital environments that simulate real-world experiences for entertainment, education, and training applications.",
+                        "Augmented reality overlays digital information onto the physical world through smartphone cameras or specialized headsets, enhancing perception of reality.",
+                        "Automation tools streamline repetitive tasks and workflows, increasing productivity while reducing human error in manufacturing and service industries.",
+                        "Quality assurance processes establish standards and procedures to ensure products meet specifications and customer expectations before market release.",
+                        "Project management methodologies provide frameworks for planning, executing, and controlling complex initiatives with multiple stakeholders and deliverables.",
+                        "Cloud migration strategies help organizations transition from on-premises infrastructure to scalable cloud platforms while minimizing disruption to operations.",
+                        "Continuous integration pipelines automatically build, test, and deploy code changes to catch issues early in the development lifecycle.",
+                        "Data warehousing solutions consolidate information from multiple sources into centralized repositories optimized for analysis and reporting.",
+                        "Mobile-first design prioritizes smartphone and tablet experiences to accommodate the growing number of users accessing services through mobile devices.",
+                        "Microservices communication patterns define how distributed applications coordinate between independent services to maintain data consistency and reliability."
+                    ],
+                    advanced: [
+                        "Distributed consensus algorithms must address the fundamental challenges of coordinating state changes across multiple nodes while handling network partitions and Byzantine failures.",
+                        "Quantum error correction techniques are essential for building fault-tolerant quantum computers that can maintain coherence long enough to perform useful computations.",
+                        "Advanced compiler optimizations leverage dataflow analysis, loop transformations, and interprocedural optimization to generate highly efficient machine code.",
+                        "Cryptographic hash functions provide one-way mathematical operations that are fundamental to digital signatures, proof-of-work systems, and data integrity verification.",
+                        "Machine learning model interpretability techniques help understand how neural networks make decisions, addressing the black-box problem in critical applications.",
+                        "Graph neural networks extend deep learning to non-Euclidean data structures, enabling applications in social networks, molecular analysis, and knowledge graphs.",
+                        "Homomorphic encryption allows computation on encrypted data without decrypting it, enabling privacy-preserving cloud computing and secure multiparty computation.",
+                        "Consensus mechanisms in blockchain systems balance security, scalability, and decentralization through various approaches like proof-of-stake and delegated proof-of-stake.",
+                        "Advanced database optimization techniques include query plan analysis, index strategies, and partitioning schemes to handle massive datasets efficiently.",
+                        "Real-time streaming data processing systems must handle high-throughput ingestion while maintaining low latency and exactly-once processing semantics.",
+                        "Container orchestration platforms manage complex distributed applications through automated deployment, scaling, and service discovery mechanisms.",
+                        "Software-defined networking decouples network control logic from forwarding hardware, enabling programmable and flexible network management.",
+                        "Edge computing brings computation closer to data sources to reduce latency and bandwidth usage for Internet of Things and mobile applications.",
+                        "Formal verification methods use mathematical proofs to guarantee software correctness, particularly important for safety-critical and security-sensitive systems.",
+                        "Advanced caching strategies include distributed caching, cache coherence protocols, and replacement policies to optimize system performance.",
+                        "Serverless computing abstracts infrastructure management while providing event-driven execution models that scale automatically based on demand.",
+                        "Multi-tenant architecture design ensures resource isolation and security while maximizing efficiency in software-as-a-service platforms.",
+                        "Advanced monitoring and observability tools provide insights into distributed system behavior through metrics, logs, and distributed tracing.",
+                        "High-availability system design requires redundancy, failover mechanisms, and disaster recovery procedures to minimize downtime.",
+                        "Performance testing methodologies simulate realistic load patterns to identify bottlenecks and validate system capacity under stress conditions."
+                    ],
+                    expert: [
+                        "Type-driven development leverages advanced type systems with dependent types and linear types to encode program invariants and resource management constraints.",
+                        "Category theory provides mathematical foundations for functional programming languages through concepts like functors, monads, and natural transformations.",
+                        "Proof assistants like Coq and Lean enable formal verification of mathematical theorems and software correctness through interactive theorem proving.",
+                        "Advanced quantum algorithms exploit quantum mechanical phenomena like superposition and entanglement to achieve exponential speedups for specific problem classes.",
+                        "Algebraic effects and handlers provide composable abstractions for side effects in functional programming languages, enabling modular program reasoning.",
+                        "Linear logic and session types ensure proper resource usage and protocol compliance in concurrent and distributed systems programming.",
+                        "Advanced garbage collection algorithms balance throughput, latency, and memory overhead through techniques like generational collection and concurrent marking.",
+                        "Dependent type systems can express complex program properties and invariants that are checked at compile time, eliminating entire classes of runtime errors.",
+                        "Advanced optimization techniques in high-performance computing leverage vectorization, parallelization, and memory hierarchy optimization for scientific applications.",
+                        "Formal semantics of programming languages define precise mathematical meanings for language constructs, enabling rigorous analysis and compiler correctness.",
+                        "Advanced concurrent programming models like actor systems and software transactional memory provide abstractions for safe parallel computation.",
+                        "Probabilistic programming languages enable Bayesian inference and machine learning through probabilistic models expressed as programs.",
+                        "Advanced compiler techniques include static analysis, abstract interpretation, and program transformation for automatic optimization and verification.",
+                        "Lambda calculus and its extensions form the theoretical foundation for functional programming languages and type theory.",
+                        "Advanced database theory includes query optimization, concurrency control, and distributed transaction processing in large-scale systems."
+                    ]
+                };
+                
+                // Merge additional texts
+                Object.keys(additionalTexts).forEach(level => {
+                    this.texts[level] = [...this.texts[level], ...additionalTexts[level]];
+                });
+            }
+            
+            initializeEventListeners() {
+                // Time selection
+                document.getElementById('time-select').addEventListener('change', (e) => {
+                    this.gameState.selectedTime = parseInt(e.target.value);
+                    this.gameState.timeLeft = this.gameState.selectedTime;
+                    this.updateTimer();
+                });
+                
+                // Level selection
+                document.getElementById('level-select').addEventListener('change', (e) => {
+                    this.gameState.selectedLevel = e.target.value;
+                    this.loadNewText();
+                });
+                
+                // Game controls
+                document.getElementById('start-btn').addEventListener('click', () => this.startGame());
+                document.getElementById('reset-btn').addEventListener('click', () => this.resetGame());
+                
+                // Typing input
+                document.getElementById('typing-input').addEventListener('input', (e) => this.handleTyping(e));
+                document.getElementById('typing-input').addEventListener('keydown', (e) => {
+                    if (e.key === 'Tab') {
+                        e.preventDefault();
+                    }
+                });
+            }
+            
+            loadNewText() {
+                const levelTexts = this.texts[this.gameState.selectedLevel];
+                const randomText = levelTexts[Math.floor(Math.random() * levelTexts.length)];
+                this.gameState.currentText = randomText;
+                this.displayText();
+            }
+            
+            displayText() {
+                const display = document.getElementById('text-display');
+                const words = this.gameState.currentText.split(' ');
+                
+                let html = '';
+                let charIndex = 0;
+                
+                words.forEach((word, wordIndex) => {
+                    let wordHtml = '';
+                    for (let i = 0; i < word.length; i++) {
+                        const currentCharIndex = charIndex + i;
+                        let charClass = '';
+                        
+                        if (currentCharIndex < this.gameState.currentIndex) {
+                            const inputValue = document.getElementById('typing-input').value;
+                            charClass = this.gameState.currentText[currentCharIndex] === inputValue[currentCharIndex] ? 'correct' : 'incorrect';
+                        } else if (currentCharIndex === this.gameState.currentIndex) {
+                            charClass = 'current-word';
+                        }
+                        
+                        wordHtml += `<span class="${charClass}">${word[i]}</span>`;
+                    }
+                    
+                    html += wordHtml;
+                    if (wordIndex < words.length - 1) {
+                        const spaceIndex = charIndex + word.length;
+                        let spaceClass = '';
+                        if (spaceIndex < this.gameState.currentIndex) {
+                            const inputValue = document.getElementById('typing-input').value;
+                            spaceClass = ' ' === inputValue[spaceIndex] ? 'correct' : 'incorrect';
+                        } else if (spaceIndex === this.gameState.currentIndex) {
+                            spaceClass = 'current-word';
+                        }
+                        html += `<span class="${spaceClass}"> </span>`;
+                    }
+                    
+                    charIndex += word.length + (wordIndex < words.length - 1 ? 1 : 0);
+                });
+                
+                display.innerHTML = html;
+            }
+            
+            startGame() {
+                this.gameState.isActive = true;
+                this.gameState.startTime = Date.now();
+                this.gameState.timeLeft = this.gameState.selectedTime;
+                
+                document.getElementById('typing-input').disabled = false;
+                document.getElementById('typing-input').focus();
+                document.getElementById('start-btn').disabled = true;
+                document.getElementById('results').style.display = 'none';
+                document.getElementById('stats-display').style.display = 'none';
+                
+                this.timer = setInterval(() => {
+                    this.gameState.timeLeft--;
+                    this.updateTimer();
+                    
+                    if (this.gameState.timeLeft <= 0) {
+                        this.endGame();
+                    }
+                }, 1000);
+            }
+            
+            resetGame() {
+                this.gameState.isActive = false;
+                this.gameState.currentIndex = 0;
+                this.gameState.correctChars = 0;
+                this.gameState.totalChars = 0;
+                this.gameState.errors = 0;
+                this.gameState.wpm = 0;
+                this.gameState.accuracy = 100;
+                this.gameState.timeLeft = this.gameState.selectedTime;
+                
+                if (this.timer) {
+                    clearInterval(this.timer);
+                    this.timer = null;
+                }
+                
+                document.getElementById('typing-input').value = '';
+                document.getElementById('typing-input').disabled = true;
+                document.getElementById('start-btn').disabled = false;
+                document.getElementById('results').style.display = 'none';
+                document.getElementById('stats-display').style.display = 'none';
+                
+                this.loadNewText();
+                this.updateStats();
+                this.updateTimer();
+                this.updateProgress();
+            }
+            
+            handleTyping(e) {
+                if (!this.gameState.isActive) return;
+                
+                const typedText = e.target.value;
+                
+                if (typedText.length <= this.gameState.currentText.length) {
+                    this.gameState.currentIndex = typedText.length;
+                    this.gameState.totalChars = typedText.length;
+                    
+                    // Count correct characters and errors
+                    let correctCount = 0;
+                    let errorCount = 0;
+                    
+                    for (let i = 0; i < typedText.length; i++) {
+                        if (i < this.gameState.currentText.length) {
+                            if (typedText[i] === this.gameState.currentText[i]) {
+                                correctCount++;
+                            } else {
+                                errorCount++;
+                            }
+                        }
+                    }
+                    
+                    this.gameState.correctChars = correctCount;
+                    this.gameState.errors = errorCount;
+                    
+                    // Calculate WPM
+                    if (this.gameState.startTime) {
+                        const timeElapsed = (Date.now() - this.gameState.startTime) / 1000 / 60;
+                        const wordsTyped = correctCount / 5;
+                        this.gameState.wpm = Math.round(wordsTyped / timeElapsed) || 0;
+                    }
+                    
+                    // Calculate accuracy
+                    if (this.gameState.totalChars > 0) {
+                        this.gameState.accuracy = Math.round((this.gameState.correctChars / this.gameState.totalChars) * 100);
+                    }
+                    
+                    this.displayText();
+                    this.updateProgress();
+                    
+                    // Generate new text when current is completed
+                    if (this.gameState.currentIndex >= this.gameState.currentText.length) {
+                        this.generateMoreText();
+                    }
+                }
+            }
+            
+            generateMoreText() {
+                const levelTexts = this.texts[this.gameState.selectedLevel];
+                const randomText = levelTexts[Math.floor(Math.random() * levelTexts.length)];
+                this.gameState.currentText += ' ' + randomText;
+                this.displayText();
+            }
+            
+            updateStats() {
+                document.getElementById('wpm').textContent = this.gameState.wpm;
+                document.getElementById('accuracy').textContent = this.gameState.accuracy + '%';
+                document.getElementById('characters').textContent = this.gameState.totalChars;
+                document.getElementById('errors').textContent = this.gameState.errors;
+            }
+            
+            updateTimer() {
+                const minutes = Math.floor(this.gameState.timeLeft / 60);
+                const seconds = this.gameState.timeLeft % 60;
+                document.getElementById('timer').textContent = `${minutes}:${seconds.toString().padStart(2, '0')}`;
+            }
+            
+            updateProgress() {
+                const progress = Math.min((this.gameState.currentIndex / this.gameState.currentText.length) * 100, 100);
+                document.getElementById('progress').style.width = progress + '%';
+            }
+            
+            endGame() {
+                this.gameState.isActive = false;
+                
+                if (this.timer) {
+                    clearInterval(this.timer);
+                    this.timer = null;
+                }
+                
+                document.getElementById('typing-input').disabled = true;
+                document.getElementById('start-btn').disabled = false;
+                
+                // Show final stats
+                this.updateStats();
+                document.getElementById('stats-display').style.display = 'flex';
+                
+                // Show results
+                document.getElementById('final-wpm').textContent = this.gameState.wpm;
+                document.getElementById('final-accuracy').textContent = this.gameState.accuracy + '%';
+                document.getElementById('final-errors').textContent = this.gameState.errors;
+                document.getElementById('final-characters').textContent = this.gameState.totalChars;
+                document.getElementById('results').style.display = 'block';
+            }
+        }
+        
+        // Initialize the game when the page loads
+        document.addEventListener('DOMContentLoaded', () => {
+            new PixelTypingMaster();
+        });
+    </script>
+</body>
+</html>
